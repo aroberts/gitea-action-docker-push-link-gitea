@@ -1,0 +1,50 @@
+name: 'Gitea Link Package'
+description: 'Link a Docker package to a repository in Gitea'
+author: 'aroberts'
+
+branding:
+  icon: 'link'
+  color: 'green'
+
+inputs:
+  registry:
+    description: 'Container registry URL'
+    required: true
+  package-owner:
+    description: 'Package owner (usually repository owner)'
+    required: true
+  package-name:
+    description: 'Package name (usually repository name)'
+    required: true
+  repository-name:
+    description: 'Repository name to link package to'
+    required: true
+  token:
+    description: 'Authentication token for registry and API'
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Link package to repository
+      shell: bash
+      run: |
+        echo "Linking package to repository..."
+        response=$(curl -s -w "%{http_code}" -X POST \
+          -H "Authorization: token ${{ inputs.token }}" \
+          -H "Content-Type: application/json" \
+          "${{ inputs.registry }}/api/v1/packages/${{ inputs.package-owner }}/container/${{ inputs.package-name }}/-/link/${{ inputs.repository-name }}" \
+          -o /tmp/link_response.json)
+
+        http_code="${response: -3}"
+
+        if [[ "$http_code" =~ ^2[0-9][0-9]$ ]]; then
+          echo "✓ Package successfully linked to repository"
+        elif [[ "$http_code" == "409" ]]; then
+          echo "ℹ Package already linked to repository"
+        else
+          echo "⚠ Failed to link package (HTTP $http_code)"
+          echo "Response:"
+          cat /tmp/link_response.json || echo "No response body"
+          exit 1
+        fi
