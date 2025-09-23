@@ -116,17 +116,3 @@ jobs:
           repository-name: ${{ gitea.repository }}
           token: ${{ secrets.PACKAGE_TOKEN }}
 ```
-
-## Why This Approach?
-
-This action follows the Unix philosophy of "do one thing well":
-
-- **Focused responsibility**: Only handles package linking
-- **Flexible**: Works with any Docker build strategy
-- **Testable**: Easy to test linking logic in isolation
-- **Maintainable**: Changes to build processes don't affect linking
-- **Extensible**: Easy to add steps between build and link (security scanning, signing, etc.)
-
-## License
-
-This action is provided as-is under the same license as the containing repository.
