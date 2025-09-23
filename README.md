@@ -5,8 +5,10 @@ A focused Gitea Action that links Docker packages to repositories in Gitea after
 ## Features
 
 - Links pushed Docker packages to repositories via Gitea API
+- Automatic HTTP redirect handling
 - Graceful error handling with clear status messages
 - Fail-fast behavior for linking errors
+- Debug mode for troubleshooting
 - Single responsibility: only handles package linking
 
 ## Usage
@@ -42,6 +44,35 @@ Use this action after building and pushing your Docker image:
 | `package-name` | Package name (usually `${{ gitea.repository }}`) |
 | `repository-name` | Repository name to link package to |
 | `token` | Authentication token for registry and API access |
+
+## Optional Inputs
+
+| Input | Description | Default |
+|-------|-------------|---------|
+| `debug` | Enable debug mode for verbose output | `false` |
+
+## Debug Mode
+
+Enable debug mode for troubleshooting by setting `debug: true`. This provides:
+
+- Input parameter values (with token masked for security)
+- Constructed API URL
+- HTTP redirect information (count and final URL)
+- Raw HTTP response body
+- Detailed curl command execution trace
+
+Example with debug enabled:
+```yaml
+- name: Link package to repository
+  uses: aroberts/gitea-link-package@v1
+  with:
+    registry: ${{ env.REGISTRY }}
+    package-owner: ${{ gitea.repository_owner }}
+    package-name: ${{ gitea.repository }}
+    repository-name: ${{ gitea.repository }}
+    token: ${{ secrets.PACKAGE_TOKEN }}
+    debug: true
+```
 
 ## Error Handling
 
@@ -115,4 +146,5 @@ jobs:
           package-name: ${{ gitea.repository }}
           repository-name: ${{ gitea.repository }}
           token: ${{ secrets.PACKAGE_TOKEN }}
+          debug: true  # Optional: enable for troubleshooting
 ```

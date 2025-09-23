@@ -22,6 +22,10 @@ inputs:
   token:
     description: 'Authentication token for registry and API'
     required: true
+  debug:
+    description: 'Enable debug mode for verbose output'
+    required: false
+    default: 'false'
 
 runs:
   using: 'composite'
@@ -29,14 +33,42 @@ runs:
     - name: Link package to repository
       shell: bash
       run: |
+        if [[ "${{ inputs.debug }}" == "true" ]]; then
+          echo "🐛 Debug mode enabled"
+          echo "🐛 Registry: ${{ inputs.registry }}"
+          echo "🐛 Package Owner: ${{ inputs.package-owner }}"
+          echo "🐛 Package Name: ${{ inputs.package-name }}"
+          echo "🐛 Repository Name: ${{ inputs.repository-name }}"
+          echo "🐛 Token: ${TOKEN:0:8}..." # Show only first 8 chars
+          set -x
+        fi
+
         echo "Linking package to repository..."
-        response=$(curl -s -w "%{http_code}" -X POST \
+
+        api_url="${{ inputs.registry }}/api/v1/packages/${{ inputs.package-owner }}/container/${{ inputs.package-name }}/-/link/${{ inputs.repository-name }}"
+
+        if [[ "${{ inputs.debug }}" == "true" ]]; then
+          echo "🐛 API URL: $api_url"
+        fi
+
+        response=$(curl -s -w "%{http_code}|%{redirect_url}|%{num_redirects}" -L -X POST \
           -H "Authorization: token ${{ inputs.token }}" \
           -H "Content-Type: application/json" \
-          "${{ inputs.registry }}/api/v1/packages/${{ inputs.package-owner }}/container/${{ inputs.package-name }}/-/link/${{ inputs.repository-name }}" \
+          "$api_url" \
           -o /tmp/link_response.json)
 
-        http_code="${response: -3}"
+        IFS='|' read -r http_code redirect_url num_redirects <<< "$response"
+
+        if [[ "${{ inputs.debug }}" == "true" ]]; then
+          echo "🐛 HTTP Status Code: $http_code"
+          echo "🐛 Number of redirects: $num_redirects"
+          if [[ -n "$redirect_url" && "$redirect_url" != "$api_url" ]]; then
+            echo "🐛 Final URL after redirects: $redirect_url"
+          fi
+          echo "🐛 Raw response:"
+          cat /tmp/link_response.json || echo "No response body"
+          set +x
+        fi
 
         if [[ "$http_code" =~ ^2[0-9][0-9]$ ]]; then
           echo "✓ Package successfully linked to repository"
