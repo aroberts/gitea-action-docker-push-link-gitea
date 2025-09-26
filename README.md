@@ -139,12 +139,12 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Link package to repository
-        uses: aroberts/gitea-link-package@v1
+        uses: aroberts/gitea-link-package@v3
         with:
-          registry: ${{ env.REGISTRY }}
+          registry: "https://${{ env.REGISTRY }}"
           package-owner: ${{ gitea.repository_owner }}
-          package-name: ${{ gitea.repository }}
-          repository-name: ${{ gitea.repository }}
+          package-name: ${{ gitea.event.repository.name }}
+          repository-name: ${{ gitea.event.repository.name }}
           token: ${{ secrets.PACKAGE_TOKEN }}
-          debug: true  # Optional: enable for troubleshooting
+          debug: true # optional, adds significant output for debugging
 ```
