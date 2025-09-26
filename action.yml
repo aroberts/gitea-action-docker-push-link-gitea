@@ -33,6 +33,7 @@ runs:
     - name: Link package to repository
       shell: bash
       run: |
+        TOKEN="${{ inputs.token }}"
         if [[ "${{ inputs.debug }}" == "true" ]]; then
           echo "🐛 Debug mode enabled"
           echo "🐛 Registry: ${{ inputs.registry }}"
